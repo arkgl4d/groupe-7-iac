@@ -2,6 +2,7 @@ locals {
   common_tags = merge(
     {
       Project = "ynov-iac-2025"
+      equipe = "groupe-7"
     },
     var.common_tags
   )
