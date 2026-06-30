@@ -1,0 +1,36 @@
+- name: Package and deploy Lambda handler
+  hosts: localhost
+  gather_facts: no
+  vars:
+    lambda_name: groupe-7-iac-image-processor
+    lambda_package_path: /home/admuser/groupe-7-iac/terraform/lambda_package.zip
+    lambda_build_dir: /home/admuser/groupe-7-iac/.lambda_build
+    handler_path: /home/admuser/groupe-7-iac/lambda/handler.py
+    requirements_path: /home/admuser/groupe-7-iac/lambda/requirements.txt
+    aws_region: eu-west-3
+  tasks:
+    - name: Ensure package build directory exists
+      ansible.builtin.file:
+        path: "{{ lambda_build_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Install Lambda dependencies
+      ansible.builtin.command:
+        cmd: /home/admuser/venv/bin/python -m pip install --quiet --target {{ lambda_build_dir }} -r {{ requirements_path }}
+
+    - name: Copy Lambda handler into build directory
+      ansible.builtin.copy:
+        src: "{{ handler_path }}"
+        dest: "{{ lambda_build_dir }}/handler.py"
+        mode: '0644'
+
+    - name: Build Lambda deployment package
+      ansible.builtin.command:
+        cmd: /home/admuser/venv/bin/python /home/admuser/groupe-7-iac/scripts/build_lambda.py
+
+    - name: Update Lambda function code using AWS CLI
+      ansible.builtin.shell: |
+        AWS_ACCESS_KEY_ID="{{ lookup('env','AWS_ACCESS_KEY_ID') }}"         AWS_SECRET_ACCESS_KEY="{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"         AWS_DEFAULT_REGION="{{ aws_region }}"         /usr/local/bin/aws lambda update-function-code --function-name "{{ lambda_name }}" --zip-file "fileb://{{ lambda_package_path }}"
+      args:
+        warn: false

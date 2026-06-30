@@ -1,0 +1,9 @@
+aws_region = "eu-west-3"
+aws_profile = ""
+aws_shared_credentials_file = ""
+bucket_name_prefix = "groupe-7-iac"
+lambda_name = "groupe-7-iac-image-processor"
+lambda_timeout = 60
+lambda_log_retention = 14
+enable_bucket_versioning = true
+lambda_runtime = "python3.13"
