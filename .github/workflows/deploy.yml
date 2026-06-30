@@ -43,8 +43,18 @@ jobs:
           chmod +x scripts/build_lambda.sh
           ./scripts/build_lambda.sh
 
+      - name: Check AWS role secret
+        id: role-check
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.AWS_ROLE_ARN }}" ]; then
+            echo "should_assume=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_assume=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Assume AWS role
-        if: ${{ secrets.AWS_ROLE_ARN != '' }}
+        if: ${{ steps.role-check.outputs.should_assume == 'true' }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
