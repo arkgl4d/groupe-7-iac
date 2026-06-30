@@ -3,6 +3,11 @@ import {
   id = "groupe-7-iac-image-processor-role"
 }
 
+import {
+  to = module.lambda_processor.aws_lambda_function.this
+  id = "groupe-7-iac-image-processor"
+}
+
 locals {
   common_tags = merge(
     {
