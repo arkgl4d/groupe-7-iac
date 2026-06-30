@@ -52,18 +52,18 @@ jobs:
         run: terraform -chdir=terraform validate
 
       - name: Setup Infracost
-        if: ${{ vars.infracost_variable != '' }}
+        if: ${{ secrets.infracost_variable != '' }}
         uses: infracost/actions/setup@v2
         with:
-          api-key: ${{ vars.infracost_variable }}
+          api-key: ${{ secrets.infracost_variable }}
 
       - name: Infracost breakdown
-        if: ${{ vars.infracost_variable != '' }}
+        if: ${{ secrets.infracost_variable != '' }}
         run: |
           terraform -chdir=terraform init -backend=false -input=false
           terraform -chdir=terraform plan -input=false -no-color -out=tfplan
           infracost breakdown --path=terraform --format=table
 
       - name: Skip Infracost
-        if: ${{ vars.infracost_variable == '' }}
+        if: ${{ secrets.infracost_variable == '' }}
         run: echo "Infracost variable not configured; skipping cost estimation."
