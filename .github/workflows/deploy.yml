@@ -1,11 +1,14 @@
-name: deploy.ci
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  deploy:
+  validate:
+    name: Lint & Validate (CI)
     runs-on: ubuntu-latest
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
@@ -13,16 +16,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. L'action configure seule les variables AWS temporaires pour la suite
-      - name: Configure AWS Credentials (Assume Role)
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-3
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-duration-seconds: 3600
-          # AJOUTE CETTE LIGNE ICI POUR CORRIGER L'ERREUR :
           role-skip-session-tagging: true
 
       - name: Setup Terraform
@@ -30,55 +30,74 @@ jobs:
         with:
           terraform_version: 1.15.7
 
-      # Ajusté en 3.11 conformément au sujet d'évaluation Ynov
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.11' # Aligné avec la version demandée par le sujet
 
-      # Nettoyage et fiabilisation de l'installation du handler Lambda
-      - name: Install Python dependencies
+      # 1. Vérification du formatage Terraform
+      - name: Terraform fmt check
+        run: terraform -chdir=terraform fmt -check -recursive
+
+      # 2. Validation de la syntaxe Terraform
+      - name: Terraform init & validate
         run: |
-          python -m pip install --upgrade pip
-          if [ -f lambda/requirements.txt ]; then
-            python -m pip install -r lambda/requirements.txt
-          fi
+          terraform -chdir=terraform init -backend=false -input=false
+          terraform -chdir=terraform validate
 
-      - name: Build Lambda package
-        run: |
-          chmod +x scripts/build_lambda.sh
-          ./scripts/build_lambda.sh
-
-      - name: Terraform init
-        run: terraform -chdir=terraform init -input=false
-
-      # Vérification de la présence de la clé Infracost
-      - name: Check Infracost secret
-        id: infracost-check
-        shell: bash
-        run: |
-          if [ -n "${{ secrets.INFRACOST_API_KEY }}" ]; then
-            echo "should_run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_run=false" >> "$GITHUB_OUTPUT"
-            echo "Infracost secret not configured; skipping cost estimation."
-          fi
-
-      - name: Setup Infracost
-        if: ${{ steps.infracost-check.outputs.should_run == 'true' }}
-        uses: infracost/actions/setup@v2
+      # 3. ANALYSE DE SÉCURITÉ : Checkov (Exigence du sujet)
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
         with:
-          api-key: ${{ secrets.INFRACOST_API_KEY }}
+          framework: terraform
+          directory: terraform/
+          # soft_fail: true # Décommente cette ligne si Checkov bloque ton pipeline pour des alertes mineures AWS d'école
 
-      - name: Infracost breakdown
-        if: ${{ steps.infracost-check.outputs.should_run == 'true' }}
+      # 4. QUALITÉ DU CODE ANSIBLE : Ansible Lint (Exigence du sujet)
+      - name: Run Ansible Lint
+        uses: ansibles/ansible-lint-action@v6
+        with:
+          targets: |
+            ansible/
+
+  deploy:
+    name: Terraform Deploy & Ansible Update
+    needs: validate # <-- CRUCIAL : Le déploiement ne se lance que si la validation réussit !
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Uniquement sur push main
+    runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-3
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-skip-session-tagging: true
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.7
+
+      - name: Terraform Init & Apply
         run: |
-          terraform -chdir=terraform plan -input=false -no-color -out=tfplan
-          infracost breakdown --path=terraform --format=table
+          terraform -chdir=terraform init -input=false
+          terraform -chdir=terraform apply -auto-approve -input=false
 
-      # Plus aucun bloc 'env:' ici, Terraform utilise les accès générés par l'Assume Role
-      - name: Terraform plan
-        run: terraform -chdir=terraform plan -input=false -out=tfplan
+      # =========================================================================
+      # LA BRIQUE MANQUANTE : ANSIBLE
+      # =========================================================================
+      - name: Install Ansible & AWS Collection
+        run: |
+          pip install ansible boto3 botocore
+          ansible-galaxy collection install amazon.aws
 
-      - name: Terraform apply
-        run: terraform -chdir=terraform apply -auto-approve -input=false tfplan
+      - name: Run Ansible Playbook to update Lambda
+        run: |
+          ansible-playbook -i localhost, ansible/playbook.yml
