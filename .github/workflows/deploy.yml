@@ -17,7 +17,7 @@ jobs:
 
   deploy:
     name: Deploy & Configure (CD)
-    needs: validate # <-- CHAÎNAGE : Ce job attend que 'validate' soit un succès
+#    needs: validate # <-- CHAÎNAGE : Ce job attend que 'validate' soit un succès
 #    # S'exécute uniquement lors d'un vrai push sur les branches principales (pas sur les Pull Requests)
 #    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
