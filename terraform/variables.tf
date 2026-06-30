@@ -16,6 +16,18 @@ variable "aws_shared_credentials_file" {
   default     = ""
 }
 
+variable "aws_assume_role_arn" {
+  type        = string
+  description = "ARN of the IAM role to assume for Terraform operations"
+  default     = ""
+}
+
+variable "aws_assume_role_external_id" {
+  type        = string
+  description = "Optional external ID for the role assumption"
+  default     = ""
+}
+
 variable "bucket_name_prefix" {
   type        = string
   description = "Base prefix used for bucket and resource naming"

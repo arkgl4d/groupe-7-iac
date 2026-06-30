@@ -16,6 +16,8 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: eu-west-3
       TF_VAR_aws_region: eu-west-3
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_EXTERNAL_ID: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
 
     steps:
       - name: Checkout repository
@@ -41,7 +43,32 @@ jobs:
           chmod +x scripts/build_lambda.sh
           ./scripts/build_lambda.sh
 
+      - name: Assume AWS role
+        if: ${{ secrets.AWS_ROLE_ARN != '' }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-3
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+          AWS_ROLE_EXTERNAL_ID: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
+        run: |
+          set -e
+          if [ -n "$AWS_ROLE_EXTERNAL_ID" ]; then
+            CREDENTIALS=$(aws sts assume-role --role-arn "$AWS_ROLE_ARN" --role-session-name github-actions-deploy --external-id "$AWS_ROLE_EXTERNAL_ID" --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text)
+          else
+            CREDENTIALS=$(aws sts assume-role --role-arn "$AWS_ROLE_ARN" --role-session-name github-actions-deploy --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text)
+          fi
+          read -r ACCESS_KEY SECRET_KEY SESSION_TOKEN <<< "$CREDENTIALS"
+          echo "AWS_ACCESS_KEY_ID=$ACCESS_KEY" >> "$GITHUB_ENV"
+          echo "AWS_SECRET_ACCESS_KEY=$SECRET_KEY" >> "$GITHUB_ENV"
+          echo "AWS_SESSION_TOKEN=$SESSION_TOKEN" >> "$GITHUB_ENV"
+
       - name: Terraform init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-3
+          AWS_SESSION_TOKEN: ${{ env.AWS_SESSION_TOKEN }}
         run: terraform -chdir=terraform init -input=false
 
       - name: Check Infracost secret
@@ -68,7 +95,17 @@ jobs:
           infracost breakdown --path=terraform --format=table
 
       - name: Terraform plan
+        env:
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-3
+          AWS_SESSION_TOKEN: ${{ env.AWS_SESSION_TOKEN }}
         run: terraform -chdir=terraform plan -out=tfplan
 
       - name: Terraform apply
+        env:
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-3
+          AWS_SESSION_TOKEN: ${{ env.AWS_SESSION_TOKEN }}
         run: terraform -chdir=terraform apply -auto-approve -input=false tfplan

@@ -31,6 +31,10 @@
 
     - name: Update Lambda function code using AWS CLI
       ansible.builtin.shell: |
-        AWS_ACCESS_KEY_ID="{{ lookup('env','AWS_ACCESS_KEY_ID') }}"         AWS_SECRET_ACCESS_KEY="{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"         AWS_DEFAULT_REGION="{{ aws_region }}"         /usr/local/bin/aws lambda update-function-code --function-name "{{ lambda_name }}" --zip-file "fileb://{{ lambda_package_path }}"
+        AWS_ACCESS_KEY_ID="{{ lookup('env','AWS_ACCESS_KEY_ID') }}" \
+        AWS_SECRET_ACCESS_KEY="{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}" \
+        AWS_SESSION_TOKEN="{{ lookup('env','AWS_SESSION_TOKEN') }}" \
+        AWS_DEFAULT_REGION="{{ aws_region }}" \
+        /usr/local/bin/aws lambda update-function-code --function-name "{{ lambda_name }}" --zip-file "fileb://{{ lambda_package_path }}"
       args:
         warn: false
