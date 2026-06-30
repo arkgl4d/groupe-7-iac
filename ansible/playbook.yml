@@ -45,5 +45,6 @@
         name: "{{ lambda_name }}"
         zip_file: "{{ lambda_package_path }}"
         region: "{{ aws_region }}"
-        role: "{{ lambda_role_arn }}" # Correction : Ajout du paramètre requis par le schéma
+        role: "{{ lambda_role_arn }}"
+        runtime: "python3.11" # <-- Ajouté pour faire disparaître le warning d'arguments
         state: present

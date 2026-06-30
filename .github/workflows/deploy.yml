@@ -53,13 +53,15 @@ jobs:
           directory: terraform/
           soft_fail: true # Permet de ne pas bloquer le pipeline pour des alertes mineures d'école
 
-      - name: Install Ansible Lint & Dependencies locally
-        run: |
-          pip install ansible-lint ansible
-          ansible-galaxy collection install -r ansible/requirements.yml
-
-      - name: Run Ansible Lint (CLI Local)
-        run: ansible-lint ansible/
+      # 4. QUALITÉ DU CODE ANSIBLE : Ansible Lint (Configuré pour trouver ton requirements.yml)
+      - name: Run Ansible Lint
+        uses: ansible/ansible-lint@main
+        with:
+          targets: |
+            ansible/
+        env:
+          # On indique au linter d'installer les dépendances avant de scanner
+          ANSIBLE_GALAXY_ROLE_FILE: ansible/requirements.yml
 
   # =========================================================================
   # JOB 2 : DÉPLOIEMENT & CONFIGURATION (CD) - Étape A
