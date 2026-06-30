@@ -51,19 +51,26 @@ jobs:
       - name: Terraform validate
         run: terraform -chdir=terraform validate
 
+      - name: Check Infracost secret
+        id: infracost-check
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.INFRACOST_API_KEY }}" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "Infracost secret not configured; skipping cost estimation."
+          fi
+
       - name: Setup Infracost
-        if: ${{ secrets.infracost_variable != '' }}
+        if: ${{ steps.infracost-check.outputs.should_run == 'true' }}
         uses: infracost/actions/setup@v2
         with:
-          api-key: ${{ secrets.infracost_variable }}
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
 
       - name: Infracost breakdown
-        if: ${{ secrets.infracost_variable != '' }}
+        if: ${{ steps.infracost-check.outputs.should_run == 'true' }}
         run: |
           terraform -chdir=terraform init -backend=false -input=false
           terraform -chdir=terraform plan -input=false -no-color -out=tfplan
           infracost breakdown --path=terraform --format=table
-
-      - name: Skip Infracost
-        if: ${{ secrets.infracost_variable == '' }}
-        run: echo "Infracost variable not configured; skipping cost estimation."
