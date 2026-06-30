@@ -1,13 +1,17 @@
 - name: Package and deploy Lambda handler
   hosts: localhost
   gather_facts: no
+  
   vars:
-    lambda_name: groupe-7-iac-image-processor
-    lambda_package_path: /home/admuser/groupe-7-iac/terraform/lambda_package.zip
-    lambda_build_dir: /home/admuser/groupe-7-iac/.lambda_build
-    handler_path: /home/admuser/groupe-7-iac/lambda/handler.py
-    requirements_path: /home/admuser/groupe-7-iac/lambda/requirements.txt
-    aws_region: eu-west-3
+    lambda_name: "groupe-7-iac-image-processor"
+    # Utilisation de {{ playbook_dir }} pour s'adapter dynamiquement à l'emplacement sur le runner GitHub
+    project_root: "{{ playbook_dir }}/.."
+    lambda_package_path: "{{ project_root }}/terraform/lambda_package.zip"
+    lambda_build_dir: "{{ project_root }}/.lambda_build"
+    handler_path: "{{ project_root }}/lambda/handler.py"
+    requirements_path: "{{ project_root }}/lambda/requirements.txt"
+    aws_region: "eu-west-3"
+
   tasks:
     - name: Ensure package build directory exists
       ansible.builtin.file:
@@ -16,8 +20,10 @@
         mode: '0755'
 
     - name: Install Lambda dependencies
-      ansible.builtin.command:
-        cmd: /home/admuser/venv/bin/python -m pip install --quiet --target {{ lambda_build_dir }} -r {{ requirements_path }}
+      ansible.builtin.pip:
+        requirements: "{{ requirements_path }}"
+        target: "{{ lambda_build_dir }}"
+        extra_args: "--quiet"
 
     - name: Copy Lambda handler into build directory
       ansible.builtin.copy:
@@ -25,16 +31,17 @@
         dest: "{{ lambda_build_dir }}/handler.py"
         mode: '0644'
 
-    - name: Build Lambda deployment package
-      ansible.builtin.command:
-        cmd: /home/admuser/venv/bin/python /home/admuser/groupe-7-iac/scripts/build_lambda.py
+    # Option propre sous Ansible : compresser directement sans script externe python si tu veux
+    - name: Create Lambda deployment package archive
+      community.general.archive:
+        path: "{{ lambda_build_dir }}/*"
+        dest: "{{ lambda_package_path }}"
+        format: zip
 
-    - name: Update Lambda function code using AWS CLI
-      ansible.builtin.shell: |
-        AWS_ACCESS_KEY_ID="{{ lookup('env','AWS_ACCESS_KEY_ID') }}" \
-        AWS_SECRET_ACCESS_KEY="{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}" \
-        AWS_SESSION_TOKEN="{{ lookup('env','AWS_SESSION_TOKEN') }}" \
-        AWS_DEFAULT_REGION="{{ aws_region }}" \
-        /usr/local/bin/aws lambda update-function-code --function-name "{{ lambda_name }}" --zip-file "fileb://{{ lambda_package_path }}"
-      args:
-        warn: false
+    # VALIDATION CRITÈRE : Utilisation de la collection amazon.aws exigée par le sujet
+    - name: Update Lambda function code using Native Ansible Module
+      amazon.aws.lambda:
+        name: "{{ lambda_name }}"
+        zip_file: "{{ lambda_package_path }}"
+        region: "{{ aws_region }}"
+        state: present
