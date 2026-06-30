@@ -14,6 +14,11 @@ import {
   id = "groupe-7-iac-image-processor/AllowExecutionFromS3"
 }
 
+import {
+  to = aws_cloudwatch_log_group.lambda
+  id = "/aws/lambda/groupe-7-iac-image-processor"
+}
+
 locals {
   common_tags = merge(
     {
