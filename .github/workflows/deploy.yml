@@ -54,7 +54,7 @@ jobs:
           soft_fail: true # Permet de ne pas bloquer le pipeline pour des alertes mineures d'école
 
       - name: Run Ansible Lint
-        uses: ansibles/ansible-lint-action@v6
+        uses: ansible/ansible-lint-action@v6  # <-- Corrigé ici (ansible au lieu de ansibles)
         with:
           targets: |
             ansible/
