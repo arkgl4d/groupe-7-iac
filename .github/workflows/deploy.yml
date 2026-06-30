@@ -54,10 +54,13 @@ jobs:
           soft_fail: true # Permet de ne pas bloquer le pipeline pour des alertes mineures d'école
 
       - name: Run Ansible Lint
-        uses: ansible/ansible-lint@main # <-- La syntaxe officielle actuelle
+        uses: ansible/ansible-lint@main
         with:
           targets: |
             ansible/
+        env:
+          # On indique au linter d'installer les dépendances avant de scanner
+          ANSIBLE_GALAXY_ROLE_FILE: ansible/requirements.yml
 
   # =========================================================================
   # JOB 2 : DÉPLOIEMENT & CONFIGURATION (CD) - Étape A
