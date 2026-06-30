@@ -76,16 +76,17 @@ resource "aws_lambda_permission" "allow_s3" {
   source_arn    = local.source_bucket_arn
 }
 
-resource "aws_s3_bucket_notification" "source_to_lambda" {
-  bucket = var.source_bucket_name
-
-  lambda_function {
-    lambda_function_arn = aws_lambda_function.this.arn
-    events              = ["s3:ObjectCreated:*"]
-  }
-
-  depends_on = [
-    aws_lambda_permission.allow_s3,
-    aws_lambda_function.this,
-  ]
-}
+# COMMENTE TEMPORAIREMENT CE BLOC :
+# resource "aws_s3_bucket_notification" "source_to_lambda" {
+#   bucket = var.source_bucket_name
+# 
+#   lambda_function {
+#     lambda_function_arn = aws_lambda_function.this.arn
+#     events              = ["s3:ObjectCreated:*"]
+#   }
+# 
+#   depends_on = [
+#     aws_lambda_permission.allow_s3,
+#     aws_lambda_function.this,
+#   ]
+# }

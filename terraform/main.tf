@@ -51,8 +51,3 @@ resource "aws_cloudwatch_log_group" "lambda" {
   retention_in_days = var.lambda_log_retention
   tags              = local.common_tags
 }
-
-import {
-  to = module.lambda_processor.aws_iam_role.this
-  id = "groupe-7-iac-image-processor-role" # Remplace par le nom EXACT du rôle qui bloque
-}
