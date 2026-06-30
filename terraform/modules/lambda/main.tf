@@ -26,7 +26,7 @@ resource "aws_iam_role" "this" {
 resource "aws_iam_role_policy" "this" {
   name = "groupe-7-iac-image-processor-policy"
   role = aws_iam_role.this.id
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
