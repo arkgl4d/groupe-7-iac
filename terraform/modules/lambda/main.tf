@@ -2,22 +2,8 @@ locals {
   source_bucket_arn = "arn:aws:s3:::${var.source_bucket_name}"
 }
 
-resource "aws_iam_role" "this" {
-  name = "${var.lambda_name}-role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = merge(var.tags, { Name = "${var.lambda_name}-role" })
+data "aws_iam_role" "this" {
+  name = "groupe-7-iac-image-processor-role"
 }
 
 resource "aws_iam_role_policy" "this" {
@@ -76,17 +62,17 @@ resource "aws_lambda_permission" "allow_s3" {
   source_arn    = local.source_bucket_arn
 }
 
-# COMMENTE TEMPORAIREMENT CE BLOC :
-# resource "aws_s3_bucket_notification" "source_to_lambda" {
-#   bucket = var.source_bucket_name
-# 
-#   lambda_function {
-#     lambda_function_arn = aws_lambda_function.this.arn
-#     events              = ["s3:ObjectCreated:*"]
-#   }
-# 
-#   depends_on = [
-#     aws_lambda_permission.allow_s3,
-#     aws_lambda_function.this,
-#   ]
-# }
+COMMENTE TEMPORAIREMENT CE BLOC :
+resource "aws_s3_bucket_notification" "source_to_lambda" {
+   bucket = var.source_bucket_name
+ 
+   lambda_function {
+     lambda_function_arn = aws_lambda_function.this.arn
+     events              = ["s3:ObjectCreated:*"]
+   }
+ 
+   depends_on = [
+     aws_lambda_permission.allow_s3,
+     aws_lambda_function.this,
+    ]
+}
