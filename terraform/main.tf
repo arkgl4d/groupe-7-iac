@@ -8,6 +8,12 @@ import {
   id = "groupe-7-iac-image-processor"
 }
 
+import {
+  to = module.lambda_processor.aws_lambda_permission.allow_s3
+  # L'identifiant d'un import de permission Lambda sous AWS se structure ainsi : "NomDeLaLambda/StatementID"
+  id = "groupe-7-iac-image-processor/AllowExecutionFromS3"
+}
+
 locals {
   common_tags = merge(
     {
