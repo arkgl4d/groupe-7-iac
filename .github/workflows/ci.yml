@@ -20,8 +20,6 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: eu-west-3
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-      AWS_ROLE_EXTERNAL_ID: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
 
     steps:
       - name: Checkout repository
@@ -50,42 +48,11 @@ jobs:
       - name: Terraform fmt check
         run: terraform -chdir=terraform fmt -check -recursive
 
-      - name: Check AWS role secret
-        id: role-check
-        shell: bash
-        run: |
-          if [ -n "${{ secrets.AWS_ROLE_ARN }}" ]; then
-            echo "should_assume=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_assume=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Assume AWS role
-        if: ${{ steps.role-check.outputs.should_assume == 'true' }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-west-3
-          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-          AWS_ROLE_EXTERNAL_ID: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
-        run: |
-          set -e
-          if [ -n "$AWS_ROLE_EXTERNAL_ID" ]; then
-            CREDENTIALS=$(aws sts assume-role --role-arn "$AWS_ROLE_ARN" --role-session-name github-actions-ci --external-id "$AWS_ROLE_EXTERNAL_ID" --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text)
-          else
-            CREDENTIALS=$(aws sts assume-role --role-arn "$AWS_ROLE_ARN" --role-session-name github-actions-ci --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text)
-          fi
-          read -r ACCESS_KEY SECRET_KEY SESSION_TOKEN <<< "$CREDENTIALS"
-          echo "AWS_ACCESS_KEY_ID=$ACCESS_KEY" >> "$GITHUB_ENV"
-          echo "AWS_SECRET_ACCESS_KEY=$SECRET_KEY" >> "$GITHUB_ENV"
-          echo "AWS_SESSION_TOKEN=$SESSION_TOKEN" >> "$GITHUB_ENV"
-
       - name: Terraform init
         env:
           AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-3
-          AWS_SESSION_TOKEN: ${{ env.AWS_SESSION_TOKEN }}
         run: terraform -chdir=terraform init -backend=false -input=false
 
       - name: Terraform validate
@@ -93,7 +60,6 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-3
-          AWS_SESSION_TOKEN: ${{ env.AWS_SESSION_TOKEN }}
         run: terraform -chdir=terraform validate
 
       - name: Check Infracost secret
@@ -116,8 +82,8 @@ jobs:
       - name: Infracost breakdown
         if: ${{ steps.infracost-check.outputs.should_run == 'true' }}
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-3
         run: |
           terraform -chdir=terraform init -backend=false -input=false
