@@ -2,13 +2,16 @@ locals {
   source_bucket_arn = "arn:aws:s3:::${var.source_bucket_name}"
 }
 
+# 1. Ton bloc data qui va chercher le rôle existant
 data "aws_iam_role" "this" {
   name = "groupe-7-iac-image-processor-role"
 }
 
+# 2. La policy rattachée (Ligne 11 corrigée avec data.)
 resource "aws_iam_role_policy" "this" {
   name = "${var.lambda_name}-policy"
-  role = aws_iam_role.this.id
+  role = data.aws_iam_role.this.id # <-- Modifié ici !
+  
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -38,10 +41,11 @@ resource "aws_iam_role_policy" "this" {
   })
 }
 
+# 3. La fonction Lambda (Ligne 44 corrigée avec data.)
 resource "aws_lambda_function" "this" {
   filename         = var.lambda_zip_path
   function_name    = var.lambda_name
-  role             = aws_iam_role.this.arn
+  role             = data.aws_iam_role.this.arn # <-- Modifié ici !
   handler          = "handler.lambda_handler"
   runtime          = var.lambda_runtime
   source_code_hash = filebase64sha256(var.lambda_zip_path)
@@ -63,15 +67,15 @@ resource "aws_lambda_permission" "allow_s3" {
 }
 
 resource "aws_s3_bucket_notification" "source_to_lambda" {
-   bucket = var.source_bucket_name
- 
-   lambda_function {
-     lambda_function_arn = aws_lambda_function.this.arn
-     events              = ["s3:ObjectCreated:*"]
-   }
- 
-   depends_on = [
-     aws_lambda_permission.allow_s3,
-     aws_lambda_function.this,
-    ]
+  bucket = var.source_bucket_name
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.this.arn
+    events              = ["s3:ObjectCreated:*"]
+  }
+
+  depends_on = [
+    aws_lambda_permission.allow_s3,
+    aws_lambda_function.this,
+  ]
 }
