@@ -64,6 +64,7 @@ jobs:
   # =========================================================================
   # JOB 2 : DÉPLOIEMENT & CONFIGURATION (CD) - Étape A
   # =========================================================================
+
   deploy:
     name: Deploy & Configure (CD)
     needs: validate # <-- CHAÎNAGE : Ce job attend que 'validate' soit un succès
@@ -74,6 +75,30 @@ jobs:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
 
     steps:
+    # =========================================================================
+      # NETTOYAGE TEMPORAIRE MANUEL (À supprimer après ce run réussi)
+      # =========================================================================
+      - name: Manual cleanup of orphan IAM Role
+        run: |
+          echo "Tentative de suppression du rôle orphelin..."
+          aws iam delete-role-policy --role-name groupe-7-iac-image-processor-role --policy-name groupe-7-iac-image-processor-policy || true
+          aws iam delete-role --role-name groupe-7-iac-image-processor-role || true
+          aws lambda delete-function --function-name groupe-7-iac-image-processor --region eu-west-3 || true
+
+      # Génère un zip factice pour que Terraform ne plante pas avant le passage d'Ansible
+      - name: Create dummy zip for Terraform initial pass
+        run: |
+          mkdir -p terraform
+          echo "# dummy" > dummy.py
+          zip -q terraform/lambda_package.zip dummy.py
+          rm dummy.py
+
+      # Utilisation du vrai backend S3 persistant pour l'apply
+      - name: Terraform Init & Apply
+        run: |
+          terraform -chdir=terraform init -input=false
+          terraform -chdir=terraform apply -auto-approve -input=false
+          
       - name: Checkout repository
         uses: actions/checkout@v4
 
