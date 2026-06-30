@@ -1,11 +1,11 @@
+---
 name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
-
+    branches: [main, master]
 jobs:
   # =========================================================================
   # JOB 1 : VALIDATION (CI) - Étape B complétée
@@ -14,7 +14,7 @@ jobs:
     name: Lint & Validate (CI)
     runs-on: ubuntu-latest
     env:
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -36,7 +36,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11' # Imposé par le sujet Ynov
+          python-version: "3.11" # Imposé par le sujet Ynov
 
       - name: Terraform fmt check
         run: terraform -chdir=terraform fmt -check -recursive
@@ -52,7 +52,7 @@ jobs:
           framework: terraform
           directory: terraform/
           soft_fail: true # Permet de ne pas bloquer le pipeline pour des alertes mineures d'école
-      
+
       - name: Run Ansible Lint
         uses: ansible/ansible-lint@main # <-- La syntaxe officielle actuelle
         with:
@@ -69,8 +69,8 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     env:
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
-      
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -99,7 +99,7 @@ jobs:
       - name: Setup Python for Ansible
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       # Installation des dépendances pour qu'Ansible puisse parler à AWS (boto3)
       - name: Install Ansible & AWS Dependencies
@@ -110,6 +110,6 @@ jobs:
 
       # Lancement du Playbook Ansible pour mettre à jour le code de la Lambda
       - name: Run Ansible Playbook
-        run: |
+        run: |-
           # On utilise localhost comme inventaire car on pilote l'API AWS directement depuis le runner
           ansible-playbook -i "localhost," ansible/playbook.yml

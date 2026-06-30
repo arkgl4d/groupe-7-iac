@@ -1,47 +1,49 @@
+---
 - name: Package and deploy Lambda handler
   hosts: localhost
-  gather_facts: no
-  
+  gather_facts: false
+
   vars:
     lambda_name: "groupe-7-iac-image-processor"
-    # Utilisation de {{ playbook_dir }} pour s'adapter dynamiquement à l'emplacement sur le runner GitHub
     project_root: "{{ playbook_dir }}/.."
     lambda_package_path: "{{ project_root }}/terraform/lambda_package.zip"
     lambda_build_dir: "{{ project_root }}/.lambda_build"
     handler_path: "{{ project_root }}/lambda/handler.py"
     requirements_path: "{{ project_root }}/lambda/requirements.txt"
     aws_region: "eu-west-3"
+    # On ajoute l'ARN de ton rôle de manière dynamique ou statique pour le module AWS
+    lambda_role_arn: "arn:aws:iam::738563260931:role/role_etudiants"
 
   tasks:
     - name: Ensure package build directory exists
       ansible.builtin.file:
         path: "{{ lambda_build_dir }}"
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: Install Lambda dependencies
       ansible.builtin.pip:
         requirements: "{{ requirements_path }}"
-        target: "{{ lambda_build_dir }}"
-        extra_args: "--quiet"
+        # Correction : On passe --target via extra_args
+        extra_args: "--quiet --target={{ lambda_build_dir }}"
 
     - name: Copy Lambda handler into build directory
       ansible.builtin.copy:
         src: "{{ handler_path }}"
         dest: "{{ lambda_build_dir }}/handler.py"
-        mode: '0644'
+        mode: "0644"
 
-    # Option propre sous Ansible : compresser directement sans script externe python si tu veux
     - name: Create Lambda deployment package archive
       community.general.archive:
         path: "{{ lambda_build_dir }}/*"
         dest: "{{ lambda_package_path }}"
         format: zip
+        mode: "0644" # Correction : Ajout du mode pour la sécurité des permissions
 
-    # VALIDATION CRITÈRE : Utilisation de la collection amazon.aws exigée par le sujet
     - name: Update Lambda function code using Native Ansible Module
       amazon.aws.lambda:
         name: "{{ lambda_name }}"
         zip_file: "{{ lambda_package_path }}"
         region: "{{ aws_region }}"
+        role: "{{ lambda_role_arn }}" # Correction : Ajout du paramètre requis par le schéma
         state: present
