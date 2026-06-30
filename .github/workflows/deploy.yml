@@ -91,6 +91,14 @@ jobs:
         with:
           terraform_version: 1.15.7
 
+      # Génère un zip factice pour que Terraform ne plante pas avant le passage d'Ansible
+      - name: Create dummy zip for Terraform initial pass
+        run: |
+          mkdir -p terraform
+          echo "# dummy" > dummy.py
+          zip -q terraform/lambda_package.zip dummy.py
+          rm dummy.py
+
       # Utilisation du vrai backend S3 persistant pour l'apply
       - name: Terraform Init & Apply
         run: |
