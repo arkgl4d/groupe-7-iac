@@ -62,7 +62,6 @@ resource "aws_lambda_permission" "allow_s3" {
   source_arn    = local.source_bucket_arn
 }
 
-COMMENTE TEMPORAIREMENT CE BLOC :
 resource "aws_s3_bucket_notification" "source_to_lambda" {
    bucket = var.source_bucket_name
  
