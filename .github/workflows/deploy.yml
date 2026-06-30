@@ -20,7 +20,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-3
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-duration-seconds: 3600
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
