@@ -19,7 +19,7 @@ variable "aws_shared_credentials_file" {
 variable "aws_assume_role_arn" {
   type        = string
   description = "ARN of the IAM role to assume for Terraform operations"
-  default     = ""
+  default     = "arn:aws:iam::738563260931:role/role_etudiants"
 }
 
 variable "aws_assume_role_external_id" {

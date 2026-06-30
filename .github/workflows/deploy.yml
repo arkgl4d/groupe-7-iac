@@ -1,40 +1,45 @@
-name: Deploy
+name: deploy.ci
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION: eu-west-3
-      TF_VAR_aws_region: eu-west-3
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # 1. L'action configure seule les variables AWS temporaires pour la suite
+      - name: Configure AWS Credentials (Assume Role)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-3
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 3600
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.15.7
 
+      # Ajusté en 3.11 conformément au sujet d'évaluation Ynov
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.11'
 
+      # Nettoyage et fiabilisation de l'installation du handler Lambda
       - name: Install Python dependencies
         run: |
-          python -m pip install --upgrade pip || python -m ensurepip --upgrade || true
-          python -m pip install -r lambda/requirements.txt || (python -m ensurepip --upgrade && python -m pip install -r lambda/requirements.txt)
+          python -m pip install --upgrade pip
+          if [ -f lambda/requirements.txt ]; then
+            python -m pip install -r lambda/requirements.txt
+          fi
 
       - name: Build Lambda package
         run: |
@@ -42,12 +47,9 @@ jobs:
           ./scripts/build_lambda.sh
 
       - name: Terraform init
-        env:
-          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-west-3
         run: terraform -chdir=terraform init -input=false
 
+      # Vérification de la présence de la clé Infracost
       - name: Check Infracost secret
         id: infracost-check
         shell: bash
@@ -71,16 +73,9 @@ jobs:
           terraform -chdir=terraform plan -input=false -no-color -out=tfplan
           infracost breakdown --path=terraform --format=table
 
+      # Plus aucun bloc 'env:' ici, Terraform utilise les accès générés par l'Assume Role
       - name: Terraform plan
-        env:
-          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-west-3
-        run: terraform -chdir=terraform plan -out=tfplan
+        run: terraform -chdir=terraform plan -input=false -out=tfplan
 
       - name: Terraform apply
-        env:
-          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-west-3
         run: terraform -chdir=terraform apply -auto-approve -input=false tfplan
