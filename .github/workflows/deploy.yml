@@ -53,7 +53,7 @@ jobs:
 
       # 6. INITIALISATION ET DEPLOIEMENT TERRAFORM
       - name: Terraform Init
-        run: terraform init -input=false
+        run: terraform init
         working-directory: ./terraform
 
       - name: Terraform Apply
