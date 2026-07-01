@@ -47,4 +47,4 @@
           --function-name "{{ lambda_name }}" \
           --runtime "python3.11" \
           --region "{{ aws_region }}"
-      changed_when: true
+      changed_when: true # noqa: yaml[new-line-at-end-of-file]
