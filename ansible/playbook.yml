@@ -23,7 +23,7 @@
     - name: Install Lambda dependencies
       ansible.builtin.pip:
         requirements: "{{ requirements_path }}"
-        extra_args: "--quiet --target={{ lambda_build_dir }} --platform manylinux2014_x86_64 --only-binary=:all:"
+        extra_args: "--quiet --target={{ lambda_build_dir }} --platform manylinux2014_x86_64 --implementation cp --python-version 3.11 --only-binary=:all:"
 
     - name: Copy Lambda handler into build directory
       ansible.builtin.copy:
