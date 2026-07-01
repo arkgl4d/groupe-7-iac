@@ -3,13 +3,13 @@ locals {
 }
 
 resource "aws_iam_role" "this" {
-  name = "groupe-7-iac-image-processor-role"
+  # ICI : Ajoute bien le -v2 ou -clean à la fin de la chaîne de caractères
+  name = "groupe-7-iac-image-processor-role-v2"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "ForceAnsibleSync"
         Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
@@ -19,17 +19,8 @@ resource "aws_iam_role" "this" {
     ]
   })
 
-  # On déclare le tag obligatoire exigé par l'école
   tags = {
     Project = "ynov-iac-2025"
-  }
-
-  # CONFIGURATION SÉCURITÉ : Interdiction formelle à Terraform de faire un "Untag"
-  lifecycle {
-    ignore_changes = [
-      tags,
-      tags_all
-    ]
   }
 }
 
