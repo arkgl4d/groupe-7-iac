@@ -42,7 +42,7 @@
           --function-name "{{ lambda_name }}" \
           --zip-file "fileb://{{ lambda_package_path }}" \
           --region "{{ aws_region }}"
-        
+
         aws lambda update-function-configuration \
           --function-name "{{ lambda_name }}" \
           --runtime "python3.11" \
