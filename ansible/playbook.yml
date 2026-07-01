@@ -39,10 +39,8 @@
         format: zip
         mode: "0644" # Correction : Ajout du mode pour la sécurité des permissions
 
-    - name: Update Lambda function code using Native Ansible Module
-      amazon.aws.lambda:
+    - name: Update Lambda function code
+      amazon.aws.lambda_code:
         name: "{{ lambda_name }}"
         zip_file: "{{ lambda_package_path }}"
         region: "{{ aws_region }}"
-        # role: "{{ lambda_role_arn }}"  <-- SUPPRIME OU COMMENTE CETTE LIGNE
-        state: present
