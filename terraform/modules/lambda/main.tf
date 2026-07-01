@@ -19,9 +19,17 @@ resource "aws_iam_role" "this" {
     ]
   })
 
-  # Le tag obligatoire exigé par la policy de ton école
+  # On déclare le tag obligatoire exigé par l'école
   tags = {
     Project = "ynov-iac-2025"
+  }
+
+  # CONFIGURATION SÉCURITÉ : Interdiction formelle à Terraform de faire un "Untag"
+  lifecycle {
+    ignore_changes = [
+      tags,
+      tags_all
+    ]
   }
 }
 
