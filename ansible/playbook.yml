@@ -39,8 +39,9 @@
         format: zip
         mode: "0644" # Correction : Ajout du mode pour la sécurité des permissions
 
-    - name: Update Lambda function code
-      amazon.aws.lambda_code:
-        name: "{{ lambda_name }}"
-        zip_file: "{{ lambda_package_path }}"
-        region: "{{ aws_region }}"
+    - name: Update Lambda function code via AWS CLI
+      ansible.builtin.shell: |
+        aws lambda update-function-code \
+          --function-name "{{ lambda_name }}" \
+          --zip-file "fileb://{{ lambda_package_path }}" \
+          --region "{{ aws_region }}"
