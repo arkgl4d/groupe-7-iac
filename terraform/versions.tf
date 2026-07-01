@@ -1,5 +1,5 @@
 terraform {
-  
+
   backend "s3" {
     bucket = "tf-state-group7-ynov"
     key    = "group7/terraform.tfstate"
