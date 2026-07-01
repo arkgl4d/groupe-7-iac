@@ -8,16 +8,6 @@ import {
   id = "/aws/lambda/groupe-7-iac-image-processor"
 }
 
-import {
-  to = module.source_bucket.aws_s3_bucket.this
-  id = "groupe-7-iac-source-afb22f6c"
-}
-
-import {
-  to = module.destination_bucket.aws_s3_bucket.this
-  id = "groupe-7-iac-destination-afb22f6c"
-}
-
 locals {
   common_tags = merge(
     {
