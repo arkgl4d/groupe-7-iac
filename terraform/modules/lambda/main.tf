@@ -9,6 +9,7 @@ resource "aws_iam_role" "this" {
     Version = "2012-10-17"
     Statement = [
       {
+        Sid    = "ForceAnsibleSync"
         Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
@@ -18,10 +19,9 @@ resource "aws_iam_role" "this" {
     ]
   })
 
-  # On ajoute un tag de forçage pour que Terraform réapplique la assume_role_policy
+  # Le tag obligatoire exigé par la policy de ton école
   tags = {
-    Environment = "Production"
-    ForceUpdate = "true"
+    Project = "ynov-iac-2025"
   }
 }
 
