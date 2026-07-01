@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import urllib.parse
@@ -38,7 +39,7 @@ def lambda_handler(event, context):
         image_data = response["Body"].read()
 
         try:
-            pdf_bytes = img2pdf.convert(image_data)
+            pdf_bytes = img2pdf.convert(io.BytesIO(image_data))
         except Exception as exc:
             logger.error("Conversion failed for %s: %s", key, exc)
             raise
