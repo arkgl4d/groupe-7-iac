@@ -31,13 +31,11 @@
         dest: "{{ lambda_build_dir }}/handler.py"
         mode: "0644"
 
-    # CORRECTION : On zip de l'intérieur du dossier pour garantir une structure plate à la racine du ZIP
     - name: Create Lambda deployment package archive via Shell
       ansible.builtin.shell: |
         cd "{{ lambda_build_dir }}" && zip -r "{{ lambda_package_path }}" .
       changed_when: true
 
-    # CORRECTION : On met à jour le code ET on s'assure que le runtime reste verrouillé sur python3.11
     - name: Update Lambda function code and configuration via AWS CLI
       ansible.builtin.shell: |
         aws lambda update-function-code \
