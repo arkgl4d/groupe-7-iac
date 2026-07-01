@@ -1,6 +1,7 @@
 # Terraform
 terraform/.terraform
 terraform/*.tfstate.backup
+terraform/terraform.tfstate
 terraform/terraform.tfvars
 terraform/lambda_package.zip
 
