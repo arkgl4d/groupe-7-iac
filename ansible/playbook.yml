@@ -11,8 +11,7 @@
     handler_path: "{{ project_root }}/lambda/handler.py"
     requirements_path: "{{ project_root }}/lambda/requirements.txt"
     aws_region: "eu-west-3"
-    # On ajoute l'ARN de ton rôle de manière dynamique ou statique pour le module AWS
-    lambda_role_arn: "arn:aws:iam::738563260931:role/role_etudiants"
+    lambda_role_arn: "{{ lookup('env', 'LAMBDA_ROLE_ARN') | default(omit) }}"
 
   tasks:
     - name: Ensure package build directory exists

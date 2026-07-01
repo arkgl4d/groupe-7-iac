@@ -53,11 +53,17 @@ jobs:
 
       # 6. INITIALISATION ET DEPLOIEMENT TERRAFORM
       - name: Terraform Init
-        run: terraform init -input=false
+        run: terraform init -input=false -migrate-state
         working-directory: ./terraform
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false
+        working-directory: ./terraform
+
+      - name: Capture Lambda role ARN
+        id: lambda_role
+        run: |
+          echo "role_arn=$(terraform output -raw lambda_role_arn)" >> "$GITHUB_OUTPUT"
         working-directory: ./terraform
 
       # 7. PRÉPARATION DE PYTHON POUR ANSIBLE
