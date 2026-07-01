@@ -1,0 +1,14 @@
+{
+  "Records": [
+    {
+      "s3": {
+        "bucket": {
+          "name": "groupe-7-iac-source-grp7"
+        },
+        "object": {
+          "key": "image_test.jpg"
+        }
+      }
+    }
+  ]
+}
