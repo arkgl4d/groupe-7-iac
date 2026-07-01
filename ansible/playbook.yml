@@ -46,5 +46,6 @@
         zip_file: "{{ lambda_package_path }}"
         region: "{{ aws_region }}"
         role: "{{ lambda_role_arn }}"
-        runtime: "python3.11" # <-- Ajouté pour faire disparaître le warning d'arguments
+        runtime: "python3.11"          # Déjà présent
+        handler: "handler.lambda_handler" # <-- Correction : Ajout du handler requis conjointement
         state: present
