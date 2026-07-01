@@ -45,3 +45,5 @@
           --function-name "{{ lambda_name }}" \
           --zip-file "fileb://{{ lambda_package_path }}" \
           --region "{{ aws_region }}"
+      # CORRECTION ANSIBLE-LINT : On assume le changement d'état
+      changed_when: true
