@@ -5,6 +5,7 @@ import urllib.parse
 import logging
 import boto3
 import img2pdf
+from PIL import Image
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -39,7 +40,14 @@ def lambda_handler(event, context):
         image_data = response["Body"].read()
 
         try:
-            pdf_bytes = img2pdf.convert(io.BytesIO(image_data))
+            with Image.open(io.BytesIO(image_data)) as img:
+                img.verify()
+        except Exception as exc:
+            logger.error("Invalid image file %s: %s", key, exc)
+            continue
+
+        try:
+            pdf_bytes = img2pdf.convert(image_data)
         except Exception as exc:
             logger.error("Conversion failed for %s: %s", key, exc)
             raise
