@@ -7,6 +7,68 @@ on:
     branches: [main, master]
 
 jobs:
+  # =========================================================================
+  # JOB 1 : CHECK (CI)
+  # =========================================================================
+  validate:
+    name: Lint & Validate (CI)
+    runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-3
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-skip-session-tagging: true
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.7
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11" # Imposé par le sujet Ynov
+
+      - name: Terraform fmt check
+        run: terraform -chdir=terraform fmt -check -recursive
+
+      - name: Terraform init & validate
+        run: |
+          terraform -chdir=terraform init -backend=false -input=false
+          terraform -chdir=terraform validate
+          
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_VARIABLE }}
+
+      - name: Generate Infracost cost estimate
+        run: |
+          infracost breakdown --path=terraform/ \
+                              --format=table
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          framework: terraform
+          directory: terraform/
+          soft_fail: true # Permet de ne pas bloquer le pipeline pour des alertes mineures d'école
+
+      - name: Install Ansible Lint & Dependencies locally
+        run: |
+          pip install ansible-lint ansible
+          ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Run Ansible Lint (CLI Local)
+        run: ansible-lint ansible/
 
   # =========================================================================
   # JOB 2 : DÉPLOIEMENT & CONFIGURATION (CD) - Version Temporaire / Fast-Pass
