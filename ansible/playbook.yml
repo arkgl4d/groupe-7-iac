@@ -21,10 +21,14 @@
         mode: "0755"
 
     - name: Install Lambda dependencies
-      ansible.builtin.pip:
-        requirements: "{{ requirements_path }}"
-        executable: "python3"
-        extra_args: "--quiet --ignore-installed --target={{ lambda_build_dir }} --platform manylinux2014_x86_64 --only-binary=:all:"
+      ansible.builtin.shell: |
+        python3 -m pip install --quiet --ignore-installed \
+          --target "{{ lambda_build_dir }}" \
+          --platform manylinux2014_x86_64 \
+          --only-binary=:all: \
+          -r "{{ requirements_path }}"
+      args:
+        creates: "{{ lambda_build_dir }}/img2pdf.py"
 
     - name: Copy Lambda handler into build directory
       ansible.builtin.copy:
