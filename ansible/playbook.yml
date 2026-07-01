@@ -23,7 +23,6 @@
     - name: Install Lambda dependencies
       ansible.builtin.pip:
         requirements: "{{ requirements_path }}"
-        # Correction : On passe --target via extra_args
         extra_args: "--quiet --target={{ lambda_build_dir }}"
 
     - name: Copy Lambda handler into build directory
@@ -32,18 +31,22 @@
         dest: "{{ lambda_build_dir }}/handler.py"
         mode: "0644"
 
-    - name: Create Lambda deployment package archive
-      community.general.archive:
-        path: "{{ lambda_build_dir }}/*"
-        dest: "{{ lambda_package_path }}"
-        format: zip
-        mode: "0644" # Correction : Ajout du mode pour la sécurité des permissions
+    # CORRECTION : On zip de l'intérieur du dossier pour garantir une structure plate à la racine du ZIP
+    - name: Create Lambda deployment package archive via Shell
+      ansible.builtin.shell: |
+        cd "{{ lambda_build_dir }}" && zip -r "{{ lambda_package_path }}" .
+      changed_when: true
 
-    - name: Update Lambda function code via AWS CLI
+    # CORRECTION : On met à jour le code ET on s'assure que le runtime reste verrouillé sur python3.11
+    - name: Update Lambda function code and configuration via AWS CLI
       ansible.builtin.shell: |
         aws lambda update-function-code \
           --function-name "{{ lambda_name }}" \
           --zip-file "fileb://{{ lambda_package_path }}" \
           --region "{{ aws_region }}"
-      # CORRECTION ANSIBLE-LINT : On assume le changement d'état
+        
+        aws lambda update-function-configuration \
+          --function-name "{{ lambda_name }}" \
+          --runtime "python3.11" \
+          --region "{{ aws_region }}"
       changed_when: true
