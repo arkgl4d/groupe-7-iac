@@ -9,12 +9,6 @@ import {
 }
 
 import {
-  to = module.lambda_processor.aws_lambda_permission.allow_s3
-  # L'identifiant d'un import de permission Lambda sous AWS se structure ainsi : "NomDeLaLambda/StatementID"
-  id = "groupe-7-iac-image-processor/AllowExecutionFromS3"
-}
-
-import {
   to = aws_cloudwatch_log_group.lambda
   id = "/aws/lambda/groupe-7-iac-image-processor"
 }
