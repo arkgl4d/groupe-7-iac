@@ -33,7 +33,7 @@ variable "tags" {
 variable "lambda_runtime" {
   type        = string
   description = "Runtime used by the Lambda function"
-  default     = "python3.13"
+  default     = "python3.11"
 }
 
 variable "lambda_timeout" {
