@@ -13,3 +13,7 @@ output "lambda_function_name" {
 output "lambda_function_arn" {
   value = module.lambda_processor.lambda_arn
 }
+
+output "lambda_role_arn" {
+  value = module.lambda_processor.lambda_role_arn
+}
