@@ -13,8 +13,8 @@ locals {
   )
 
   suffix                  = random_id.resource_suffix.hex
-  source_bucket_name      = "${var.bucket_name_prefix}-source-${local.suffix}"
-  destination_bucket_name = "${var.bucket_name_prefix}-destination-${local.suffix}"
+  source_bucket_name      = "${var.bucket_name_prefix}-source-grp7"
+  destination_bucket_name = "${var.bucket_name_prefix}-destination-grp7"
   lambda_name             = var.lambda_name
   lambda_package          = var.lambda_zip_path != "" ? var.lambda_zip_path : "${path.module}/lambda_package.zip"
 }
