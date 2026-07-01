@@ -2,7 +2,6 @@ locals {
   source_bucket_arn = "arn:aws:s3:::${var.source_bucket_name}"
 }
 
-# Création propre et managée du rôle IAM
 resource "aws_iam_role" "this" {
   name = "groupe-7-iac-image-processor-role"
 
@@ -19,7 +18,11 @@ resource "aws_iam_role" "this" {
     ]
   })
 
-  tags = merge(var.tags, { Name = "groupe-7-iac-image-processor-role" })
+  # On ajoute un tag de forçage pour que Terraform réapplique la assume_role_policy
+  tags = {
+    Environment = "Production"
+    ForceUpdate = "true" 
+  }
 }
 
 # Création de la politique associée au rôle
