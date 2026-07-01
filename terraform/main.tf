@@ -1,13 +1,3 @@
-import {
-  to = module.lambda_processor.aws_lambda_function.this
-  id = "groupe-7-iac-image-processor"
-}
-
-import {
-  to = aws_cloudwatch_log_group.lambda
-  id = "/aws/lambda/groupe-7-iac-image-processor"
-}
-
 locals {
   common_tags = merge(
     {

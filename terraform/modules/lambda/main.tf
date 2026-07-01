@@ -3,7 +3,7 @@ locals {
 }
 
 resource "aws_iam_role" "this" {
-  # ICI : Ajoute bien le -v2 ou -clean à la fin de la chaîne de caractères
+  # On s'assure d'utiliser le suffixe -v2 pour ne pas taper dans le rôle bloqué
   name = "groupe-7-iac-image-processor-role-v2"
 
   assume_role_policy = jsonencode({
@@ -23,6 +23,7 @@ resource "aws_iam_role" "this" {
     Project = "ynov-iac-2025"
   }
 }
+
 
 # Création de la politique associée au rôle
 resource "aws_iam_role_policy" "this" {
