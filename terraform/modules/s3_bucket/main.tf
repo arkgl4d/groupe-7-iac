@@ -21,7 +21,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
 }
 
 resource "aws_s3_bucket_public_access_block" "this" {
-  bucket = aws_s3_bucket.this.id
+  bucket = aws_s3_bucket.this.ids
 
   block_public_acls       = true
   block_public_policy     = true
