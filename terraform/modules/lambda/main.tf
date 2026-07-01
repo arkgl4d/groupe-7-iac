@@ -3,8 +3,7 @@ locals {
 }
 
 resource "aws_iam_role" "this" {
-  # On s'assure d'utiliser le suffixe -v2 pour ne pas taper dans le rôle bloqué
-  name = "groupe-7-iac-image-processor-role-v2"
+  name = "${var.lambda_name}-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -27,7 +26,7 @@ resource "aws_iam_role" "this" {
 
 # Création de la politique associée au rôle
 resource "aws_iam_role_policy" "this" {
-  name = "groupe-7-iac-image-processor-policy"
+  name = "${var.lambda_name}-policy"
   role = aws_iam_role.this.id
 
   policy = jsonencode({

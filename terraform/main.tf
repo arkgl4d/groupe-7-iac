@@ -1,6 +1,9 @@
-import {
-  to = module.lambda_processor.aws_iam_role.this
-  id = "groupe-7-iac-image-processor-role-v2"
+terraform {
+  backend "s3" {
+    bucket = "tf-state-group7-ynov"
+    key    = "group7/terraform.tfstate"
+    region = "eu-west-1"
+  }
 }
 
 locals {
@@ -12,15 +15,10 @@ locals {
     var.common_tags
   )
 
-  suffix                  = random_id.resource_suffix.hex
   source_bucket_name      = "${var.bucket_name_prefix}-source-grp7"
   destination_bucket_name = "${var.bucket_name_prefix}-destination-grp7"
-  lambda_name             = var.lambda_name
+  lambda_name             = "${var.lambda_name}-grp7"
   lambda_package          = var.lambda_zip_path != "" ? var.lambda_zip_path : "${path.module}/lambda_package.zip"
-}
-
-resource "random_id" "resource_suffix" {
-  byte_length = 4
 }
 
 module "source_bucket" {
