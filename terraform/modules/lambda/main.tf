@@ -21,7 +21,7 @@ resource "aws_iam_role" "this" {
   # On ajoute un tag de forçage pour que Terraform réapplique la assume_role_policy
   tags = {
     Environment = "Production"
-    ForceUpdate = "true" 
+    ForceUpdate = "true"
   }
 }
 
